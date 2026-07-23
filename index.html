@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Master Chef Cocina Pro - Edición 13 Minutos</title>
+    <style>
+        body {
+            margin: 0;
+            height: 100vh;
+            background: #0f172a;
+            color: white;
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        #header-cocina {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 20px;
+            background: rgba(0,0,0,0.85);
+            box-sizing: border-box;
+            font-size: 15px;
+            font-weight: bold;
+            border-bottom: 2px solid #334155;
+            z-index: 50;
+        }
+        #timer {
+            color: #38bdf8;
+            font-size: 18px;
+            background: rgba(56,189,248,0.1);
+            padding: 2px 8px;
+            border-radius: 6px;
+            border: 2px solid #38bdf8;
+        }
+
+        #pantalla-inicio {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: #0f172a;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 300;
+            text-align: center;
+            padding: 20px;
+        }
+
+        #pantalla-cocina {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            height: 380px;
+            background: #1e293b;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-sizing: border-box;
+            border-bottom: 4px solid #0f172a;
+        }
+
+        #bandeja-contenedor {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: #334155;
+            border: 3px solid #475569;
+            padding: 12px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+        }
+        #bandeja-items {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            min-height: 50px;
+            max-height: 100px;
+            overflow-y: auto;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            background: #0f172a;
+            padding: 8px;
+            border-radius: 8px;
+            border: 2px inset #1e293b;
+        }
+        .item-bandeja {
+            font-size: 26px;
+            background: #334155;
+            padding: 4px 8px;
+            border-radius: 6px;
+        }
+        .btn-principal {
+            background: #10b981;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-weight: bold;
+            font-size: 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+        .btn-principal:active { transform: scale(0.95); }
+        .btn-principal:disabled { background: #475569; cursor: not-allowed; opacity: 0.6; }
+
+        #pantalla-proceso {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: #0f172a;
+            display: none;
+            flex-direction: row;
+            box-sizing: border-box;
+            padding: 15px;
+            gap: 15px;
+            z-index: 20;
+        }
+        .panel-izq, .panel-der {
+            flex: 1;
+            background: #1e293b;
+            border: 2px solid #334155;
+            border-radius: 8px;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-y: auto;
+        }
+        .herramienta-btn {
+            background: #334155;
+            color: white;
+            border: 2px solid #475569;
+            padding: 8px 12px;
+            margin: 4px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 13px;
+            width: 100%;
+            text-align: center;
+        }
+        .herramienta-btn:hover { background: #475569; }
+        .herramienta-btn.activo { border-color: #f59e0b; background: #78350f; }
+
+        #pantalla-estrellas {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15,23,42,0.95);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 200;
+            text-align: center;
+            padding: 20px;
+        }
+
+        #cinta-contenedor {
+            width: 100%;
+            height: 90px;
+            background: #0f172a;
+            border-top: 4px solid #334155;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+        }
+        #banda-movil {
+            position: absolute;
+            width: 100%;
+            height: 10px;
+            background: repeating-linear-gradient(90deg, #475569, #475569 20px, #1e293b 20px, #1e293b 40px);
+            bottom: 0;
+        }
+        .ingrediente-cinta {
+            position: absolute;
+            font-size: 36px;
+            cursor: pointer;
+            transition: transform 0.1s;
+            z-index: 10;
+        }
+        .ingrediente-cinta:active { transform: scale(1.3); }
+
+        #basurero-final {
+            position: absolute;
+            right: 0; top: 0; width: 70px; height: 100%;
+            background: #475569;
+            border-left: 3px solid #1e293b;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 26px; cursor: pointer; z-index: 15;
+        }
+
+        #panel-premios {
+            width: 100%; max-width: 800px; background: #1e293b;
+            padding: 8px; text-align: center; font-size: 13px; border-top: 2px solid #334155;
+        }
+
+        #modal-general {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            text-align: center;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- PANTALLA DE INICIO CON BOTÓN -->
+    <div id="pantalla-inicio">
+        <h1 style="color: #38bdf8; margin-bottom: 10px;">👨‍🍳 Master Chef Cocina Pro</h1>
+        <p style="color: #cbd5e1; max-width: 350px; font-size: 15px; margin-bottom: 25px;">
+            Tienes <b>13 minutos</b> en cuenta regresiva para atrapar ingredientes de la cinta, armar tus recetas y conseguir premios.
+        </p>
+        <button class="btn-principal" onclick="comenzarJuego()">Comenzar Cocina</button>
+    </div>
+
+    <div id="header-cocina">
+        <span>👨‍🍳 Master Chef Cocina Pro</span>
+        <div id="timer">13:00</div>
+    </div>
+
+    <div id="pantalla-cocina">
+        <div id="bandeja-contenedor">
+            <div style="font-size: 13px; font-weight: bold; margin-bottom: 5px; color: #94a3b8;">
+                Bandeja (<span id="contador-bandeja">0</span>/14 máx)
+            </div>
+            <div id="bandeja-items">
+                <span style="color: #64748b; font-size: 12px;">Bandeja vacía. ¡Toca los ingredientes!</span>
+            </div>
+            <button id="btn-siguiente" class="btn-principal" onclick="irAlProcesamiento()" disabled>Siguiente Paso (Procesar)</button>
+        </div>
+
+        <div id="pantalla-proceso">
+            <div class="panel-izq">
+                <h4 style="margin: 0 0 10px 0; font-size: 14px; color: #f59e0b;">Tus Ingredientes</h4>
+                <div id="lista-ingredientes-proceso" style="display: flex; flex-wrap: wrap; gap: 6px; justify-content: center;"></div>
+            </div>
+            <div class="panel-der">
+                <h4 style="margin: 0 0 5px 0; font-size: 14px; color: #38bdf8;">Herramientas</h4>
+                <div style="width: 100%; display: flex; flex-direction: column; gap: 4px;">
+                    <button class="herramienta-btn" onclick="seleccionarHerramienta('cortar', this)">🔪 Cortar / Tenedor</button>
+                    <button class="herramienta-btn" onclick="seleccionarHerramienta('hornear', this)">🔥 Hornear</button>
+                    <button class="herramienta-btn" onclick="seleccionarHerramienta('freir', this)">🍳 Freír / Fritura</button>
+                    <button class="herramienta-btn" onclick="seleccionarHerramienta('licuar', this)">🌪️ Batir / Licuar</button>
+                    <button class="herramienta-btn" onclick="seleccionarHerramienta('hervir', this)">💧 Hervir</button>
+                </div>
+                <div id="instruccion-herramienta" style="font-size: 12px; color: #94a3b8; text-align: center; margin-top: 5px;">
+                    Selecciona ingrediente y herramienta.
+                </div>
+                <button class="btn-principal" style="margin-top: 5px; width: 100%; background: #3b82f6;" onclick="finalizarPlato()">Comprobar Plato</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="pantalla-estrellas">
+        <h2 id="titulo-comida-hecha" style="color: #38bdf8; margin-bottom: 5px;">¡Plato Listo!</h2>
+        <p style="font-size: 14px; color: #cbd5e1; margin-bottom: 15px;">¡Toca la comida <b>7 veces</b> para recoger tus recompensas y activar la suerte!</p>
+        <div id="comida-interactiva" style="font-size: 70px; cursor: pointer; margin: 10px;" onclick="tocarComidaPremio()">🍔</div>
+        <div id="contador-toques" style="font-size: 16px; font-weight: bold; color: #f59e0b; margin-bottom: 10px;">Toques: 0 / 7</div>
+        <div id="resultado-premios-final" style="font-size: 15px; color: #10b981; max-width: 400px; margin-top: 10px;"></div>
+        <button id="btn-finalizar-sesion" class="btn-principal" style="display:none; background:#8b5cf6;" onclick="cerrarSesionDefinitiva()">Guardar y Finalizar</button>
+    </div>
+
+    <div id="cinta-contenedor">
+        <div id="banda-movil"></div>
+        <div id="basurero-final" title="Vaciar Bandeja" onclick="vaciarBandeja()">🗑️</div>
+    </div>
+
+    <div id="panel-premios">
+        🏆 Recompensas Obtenidas: <span id="lista-premios">Ninguna</span>
+    </div>
+
+    <div id="modal-general">
+        <h2 id="modal-titulo" style="font-size: 24px; margin-bottom: 10px;">¡Aviso!</h2>
+        <p id="modal-mensaje" style="font-size: 15px; max-width: 350px; margin-bottom: 20px;"></p>
+        <button style="background:#10b981; color:white; border:none; padding:10px 20px; border-radius:6px; font-weight:bold; cursor:pointer;" onclick="cerrarModal()">Continuar</button>
+    </div>
+
+    <script>
+        // 13 MINUTOS = 780 SEGUNDOS
+        let tiempoRestante = 780;
+        let juegoIniciado = false;
+        let timerInterval = null;
+        let sesionTerminada = localStorage.getItem('cocina_terminada_v13') === 'true';
+        let premioYaObtenido = localStorage.getItem('cocina_premio_v13') || "";
+
+        if (sesionTerminada) {
+            bloquearPorTiempoAgotado();
+        }
+
+        function bloquearPorTiempoAgotado() {
+            localStorage.setItem('cocina_terminada_v13', 'true');
+            document.body.innerHTML = `
+                <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; background:#0f172a; color:white; text-align:center; padding:20px;">
+                    <h2 style="color:#ef4444; font-size:28px; margin-bottom:10px;">¡Se acabó el tiempo!</h2>
+                    <p style="font-size:18px; color:#f8fafc; background:#1e293b; padding:20px; border-radius:10px; border:2px solid #334155; max-width:450px;">
+                        ⏰ Ya no puedes cocinar más. El tiempo reglamentario ha finalizado.
+                    </p>
+                    <p style="font-size:15px; color:#38bdf8; margin-top:15px;">
+                        Premio obtenido anteriormente: <b>${premioYaObtenido || "Ninguno"}</b>
+                    </p>
+                </div>
+            `;
+            throw new Error("Tiempo agotado.");
+        }
+
+        function comenzarJuego() {
+            document.getElementById('pantalla-inicio').style.display = 'none';
+            juegoIniciado = true;
+            iniciarReloj();
+            iniciarCinta();
+        }
+
+        function iniciarReloj() {
+            timerInterval = setInterval(() => {
+                tiempoRestante--;
+                let m = Math.floor(tiempoRestante / 60);
+                let s = tiempoRestante % 60;
+                document.getElementById('timer').innerText = `${m < 10 ? '0':''}${m}:${s < 10 ? '0':''}${s}`;
+                
+                if (tiempoRestante <= 0) {
+                    clearInterval(timerInterval);
+                    bloquearPorTiempoAgotado();
+                }
+            }, 1000);
+        }
+
+        let bandeja = [];
+        let herramientaSeleccionada = null;
+        let ingredienteSeleccionadoParaProceso = null;
+        let advertenciaOportunidadUsada = false;
+        let toquesComida = 0;
+        let platoActualNombre = "";
+        let platoActualEmoji = "";
+        let multiplicadorPremio = 1;
+
+        const recetasData = [
+            { nombre: "Paella 🥘", emoji: "🥘", req: { "🍚": 1, "🦐": 1, "🍋": 1, "🧄": 1, "🫑": 1 }, pPremio: 95 },
+            { nombre: "Sushi 🍣", emoji: "🍣", req: { "🍚": 1, "🐟": 1, "🥑": 1, "🌿": 1 }, pPremio: 92 },
+            { nombre: "Ramen 🍜", emoji: "🍜", req: { "🍜": 1, "🥚": 1, "🥩": 1, "🧅": 1, "🌿": 1 }, pPremio: 90 },
+            { nombre: "Pastel 🎂", emoji: "🎂", req: { "🌾": 1, "🥚": 1, "🥛": 1, "🍫": 1, "🍓": 1 }, pPremio: 88 },
+            { nombre: "Curry 🍛", emoji: "🍛", req: { "🍚": 1, "🥔": 1, "🥕": 1, "🧅": 1, "🌶️": 1 }, pPremio: 85 },
+            { nombre: "Helado 🍨", emoji: "🍨", req: { "🥛": 1, "🍓": 1, "🍫": 1, "🧊": 1, "🍒": 1 }, pPremio: 83 },
+            { nombre: "Dango 🍡", emoji: "🍡", req: { "🍡": 1, "🌾": 1, "🍵": 1, "🍬": 1 }, pPremio: 80 },
+            { nombre: "Pizza 🍕", emoji: "🍕", req: { "🍞": 1, "🧀": 1, "🍅": 1, "🫒": 1 }, pPremio: 78 },
+            { nombre: "Camarones 🍤", emoji: "🍤", req: { "🍤": 1, "🍋": 1, "🧄": 1, "🧈": 1, "🌿": 1 }, pPremio: 75 },
+            { nombre: "Omelette 🍳", emoji: "🍳", req: { "🥚": 1, "🧈": 1, "🧀": 1, "🧅": 1, "🍄": 1 }, pPremio: 72 },
+            { nombre: "Espagueti 🍝", emoji: "🍝", req: { "🌾": 1, "🍅": 1, "🧄": 1, "🌿": 1, "🧀": 1 }, pPremio: 70 },
+            { nombre: "Donas 🍩", emoji: "🍩", req: { "🌾": 1, "🥚": 1, "🥛": 1, "🍫": 1, "🍬": 1 }, pPremio: 68 },
+            { nombre: "Galletas de chispas de chocolate 🍪", emoji: "🍪", req: { "🌾": 1, "🧈": 1, "🥚": 1, "🍫": 1, "🍬": 1 }, pPremio: 65 },
+            { nombre: "Panqueques 🥞", emoji: "🥞", req: { "🌾": 1, "🥛": 1, "🥚": 1, "🧈": 1, "🍯": 1 }, pPremio: 60 },
+            { nombre: "Pollo 🍗", emoji: "🍗", req: { "🍗": 1, "🥔": 1, "🍋": 1, "🧄": 1, "🌿": 1 }, pPremio: 58 },
+            { nombre: "Burrito 🌯", emoji: "🌯", req: { "🫓": 1, "🫘": 1, "🍚": 1, "🥩": 1, "🧀": 1 }, pPremio: 55 },
+            { nombre: "Taco 🌮", emoji: "🌮", req: { "🫓": 1, "🥩": 1, "🥬": 1, "🍅": 1, "🧀": 1 }, pPremio: 52 },
+            { nombre: "Hamburguesa 🍔", emoji: "🍔", req: { "🥩": 1, "🍞": 1, "🧀": 1, "🥬": 1, "🍅": 1 }, pPremio: 50 },
+            { nombre: "Sopa 🍲", emoji: "🍲", req: { "🥔": 1, "🥕": 1, "🧅": 1, "🥩": 1, "🌿": 1 }, pPremio: 48 },
+            { nombre: "Sándwich 🥪", emoji: "🥪", req: { "🍞": 1, "🧀": 1, "🥓": 1, "🥬": 1, "🍅": 1 }, pPremio: 45 },
+            { nombre: "Hot Dog 🌭", emoji: "🌭", req: { "🍞": 1, "🥩": 1, "🧅": 1, "🟡": 1 }, pPremio: 40 },
+            { nombre: "Ensalada 🥗", emoji: "🥗", req: { "🥬": 1, "🍅": 1, "🥒": 1, "🥕": 1, "🫒": 1 }, pPremio: 35 }
+        ];
+
+        const poolIngredientes = [
+            { item: "🥩", p: 45 }, { item: "🍞", p: 10 }, { item: "🧀", p: 25 }, { item: "🥬", p: 12 }, { item: "🍅", p: 8 },
+            { item: "🫒", p: 42 }, { item: "🍚", p: 12 }, { item: "🐟", p: 60 }, { item: "🥑", p: 35 }, { item: "🌿", p: 50 },
+            { item: "🫓", p: 15 }, { item: "🥒", p: 15 }, { item: "🥕", p: 10 }, { item: "🧄", p: 10 }, { item: "🍜", p: 20 },
+            { item: "🥚", p: 5 },  { item: "🧅", p: 10 }, { item: "🦐", p: 70 }, { item: "🍋", p: 15 }, { item: "🫑", p: 20 },
+            { item: "🫘", p: 15 }, { item: "🟡", p: 15 }, { item: "🥓", p: 35 }, { item: "🥔", p: 10 }, { item: "🌶️", p: 25 },
+            { item: "🍗", p: 40 }, { item: "🧈", p: 20 }, { item: "🍤", p: 75 }, { item: "🍄", p: 40 }, { item: "🥛", p: 10 },
+            { item: "🍯", p: 35 }, { item: "🍓", p: 20 }, { item: "🍫", p: 15 }, { item: "🧊", p: 2 },  { item: "🍒", p: 45 },
+            { item: "🍡", p: 55 }, { item: "🍵", p: 40 }, { item: "🍬", p: 12 }, { item: "🌾", p: 8 }
+        ];
+
+        function iniciarCinta() {
+            setInterval(() => {
+                if (!juegoIniciado || tiempoRestante <= 0) return;
+                generarIngredienteCinta();
+            }, 1000);
+        }
+
+        function generarIngredienteCinta() {
+            const cinta = document.getElementById('cinta-contenedor');
+            if (!cinta) return;
+
+            let itemElegido = "🍞";
+            let rand = Math.random() * 100;
+            let acumulado = 0;
+            
+            for (let obj of poolIngredientes) {
+                acumulado += obj.p;
+                if (rand <= acumulado) {
+                    itemElegido = obj.item;
+                    break;
+                }
+            }
+
+            const div = document.createElement('div');
+            div.className = 'ingrediente-cinta';
+            div.innerText = itemElegido;
+            
+            // Posición inicial aleatoria en la cinta y movimiento fluido con JS
+            let posX = -40;
+            div.style.left = posX + 'px';
+            div.style.top = '15px';
+            
+            div.onclick = (e) => {
+                e.stopPropagation();
+                agregarABandeja(itemElegido);
+                div.remove();
+            };
+
+            cinta.appendChild(div);
+
+            let movimiento = setInterval(() => {
+                posX += 3;
+                div.style.left = posX + 'px';
+                if (posX > 800) {
+                    clearInterval(movimiento);
+                    if (div && div.parentNode) div.remove();
+                }
+            }, 20);
+        }
+
+        function agregarABandeja(item) {
+            if (bandeja.length >= 14) {
+                mostrarModal("Bandeja Llena", "Límite máximo de 14 ingredientes alcanzado.");
+                return;
+            }
+            bandeja.push(item);
+            actualizarBandejaUI();
+        }
+
+        function vaciarBandeja() { bandeja = []; actualizarBandejaUI(); }
+
+        function actualizarBandejaUI() {
+            const cont = document.getElementById('bandeja-items');
+            document.getElementById('contador-bandeja').innerText = bandeja.length;
+            if (bandeja.length === 0) {
+                cont.innerHTML = '<span style="color: #64748b; font-size: 12px;">Bandeja vacía. ¡Toca los ingredientes!</span>';
+                document.getElementById('btn-siguiente').disabled = true;
+            } else {
+                cont.innerHTML = "";
+                bandeja.forEach(it => {
+                    let span = document.createElement('span');
+                    span.className = 'item-bandeja';
+                    span.innerText = it;
+                    cont.appendChild(span);
+     
